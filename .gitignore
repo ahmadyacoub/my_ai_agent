@@ -1,0 +1,17 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.venv
+.env
+# macOS metadata
+.DS_Store
+
+# Temporary course test files
+calculator/pkg/morelorem.txt
