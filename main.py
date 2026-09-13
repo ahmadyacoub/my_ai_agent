@@ -2,6 +2,11 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import argparse
+from prompts import system_prompt
+from call_function import available_functions
+import json
+from call_function import available_functions, call_function
+import sys
 
 
 parser = argparse.ArgumentParser(description="Chatbot")
@@ -18,6 +23,7 @@ if api_key is None:
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=api_key,
+    
 )
 
 
@@ -25,20 +31,41 @@ client = OpenAI(
 # Now we can access `args.user_prompt`
 
 messages = [
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": args.user_prompt},
+        
     ]
+max_iterations = 20
+for _ in range(max_iterations):
+    response = client.chat.completions.create(
+        model="openrouter/free",
+        messages=messages,
+        # temperature=0,
+        tools=available_functions,
+    )
 
-response = client.chat.completions.create(
-    model="openrouter/free",
-    messages=messages
-)
+    if response.usage is None:
+            raise RuntimeError("Usage data was not returned in the API response.")
+    if args.verbose:
+            print(f"User prompt: {args.user_prompt}")
+            print(f"Prompt tokens: {response.usage.prompt_tokens}")
+            print(f"Response tokens: {response.usage.completion_tokens}")
 
-if response.usage is None:
-        raise RuntimeError("Usage data was not returned in the API response.")
-if args.verbose:
-        print(f"User prompt: {args.user_prompt}")
-        print(f"Prompt tokens: {response.usage.prompt_tokens}")
-        print(f"Response tokens: {response.usage.completion_tokens}")
+    message = response.choices[0].message
+    messages.append(message)
+    if not message.tool_calls:
+        print(f"Final response:\n{message.content}")
+        sys.exit(0)
 
-print(response.choices[0].message.content)
 
+    if message.tool_calls:
+        for tool_call in message.tool_calls:
+            result_message = call_function(tool_call, verbose=args.verbose)
+            if not result_message.get("content"):
+                raise RuntimeError("Tool call returned empty content")
+            if args.verbose:
+                print(f"-> {result_message['content']}")
+            messages.append(result_message)
+    else:
+        print(f"Final response:\n{message.content}")
+        sys.exit(0)

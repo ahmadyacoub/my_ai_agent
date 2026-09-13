@@ -34,4 +34,25 @@ def run_python_file(
             output_parts.append(f"STDERR:\n{result.stderr}")
 
     return "\n".join(output_parts).strip()
-    
+schema_run_python_file = {
+    "type": "function",
+    "function": {
+        "name": "run_python_file",
+        "description": "Executes a specified Python file within the working directory using a 30-second timeout and captures stdout/stderr",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "Path to the Python (.py) file to run, relative to the working directory",
+                },
+                "args": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional command-line arguments to pass to the script",
+                },
+            },
+            "required": ["file_path"],
+        },
+    },
+}
