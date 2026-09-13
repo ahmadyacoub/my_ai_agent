@@ -13,7 +13,6 @@ def write_file(working_directory: str, file_path: str, content: str) -> str:
         parent_dir = os.path.dirname(target_path)
         os.makedirs(parent_dir, exist_ok=True)
 
-        # 4. Overwrite file contents
         with open(target_path, "w") as f:
             f.write(content)
             
